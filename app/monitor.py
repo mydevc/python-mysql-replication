@@ -9,6 +9,7 @@ import datetime
 import pika
 import json
 import os.path
+import os
 
 from pymysqlreplication import BinLogStreamReader
 from pymysqlreplication.row_event import (
@@ -34,23 +35,25 @@ class DateEncoder(json.JSONEncoder):
         else:
             return json.JSONEncoder.default(self, obj)
 
+
 # 数据库连接配置
 MYSQL_SETTINGS = {
-    "host": "dbm1.rs.youfa365.com",
-    "port": 3307,
-    "user": "dbm1",
-    "passwd": "MnOYBBXNsuxmUcSHlt2JNOecjKa30F"
+    "host": os.getenv('ENV_BINLOG_HOST'),
+    "port": int(os.getenv('ENV_BINLOG_PORT')),
+    "user": os.getenv('ENV_BINLOG_USER'),
+    "passwd": os.getenv('ENV_BINLOG_PASSWD')
 }
 
 
 def main():
-    credentials = pika.PlainCredentials("admin", "dirdir")
-
     connection = pika.BlockingConnection(
         pika.ConnectionParameters(
-            host='qeue.rs.youfa365.com',
-            port=5672,
-            credentials=credentials,
+            host=os.getenv('ENV_MQ_HOST'),
+            port=int(os.getenv('ENV_MQ_PORT')),
+            credentials=pika.PlainCredentials(
+                os.getenv('ENV_MQ_USER'),
+                os.getenv('ENV_MQ_PASSWD')
+            ),
             virtual_host='/'
         )
     )
@@ -64,7 +67,7 @@ def main():
         fo = open(file_name, "r")
         file_pos = fo.read()
         fo.close()
-        if file_pos!='':
+        if file_pos != '':
             fp_list = file_pos.split('|')
             log_file = fp_list[0]
             log_pos = int(fp_list[1])
